@@ -1028,10 +1028,19 @@ static void CreateSpellTextDetails(fmt::memory_buffer& out, EQ_Spell* pSpell)
 	//----------------------------------------------------------------------------
 	// Spell Slots
 
-	char szSpellSlotInfo[MAX_STRING] = { 0 };
-	ShowSpellSlotInfo(pSpell, szSpellSlotInfo, MAX_STRING);
+	// Write each slot straight into the growing buffer. ShowSpellSlotInfo packs every
+	// slot into one MAX_STRING buffer, and spells with many long slots (Call of the
+	// Muse, Invoke Death) can overflow it and crash the client on inspect.
+	char szSlot[MAX_STRING];
+	for (int i = 0; i < GetSpellNumEffects(pSpell); i++)
+	{
+		szSlot[0] = '\0';
+		ParseSpellEffect(pSpell, i, szSlot, sizeof(szSlot));
+		if (szSlot[0] != '\0')
+			fmt::format_to(buffer, "{}<br>", szSlot);
+	}
 
-	fmt::format_to(buffer, "{}<br>", szSpellSlotInfo);
+	fmt::format_to(buffer, "<br>");
 
 	//----------------------------------------------------------------------------
 	// Usable classes
